@@ -26,3 +26,6 @@ After that, once you make your relevant changes, please push to the branch and s
 
 ## Maintainers
 This repository is being maintained by KSEA @ UC Berkeley, Project Team of Fall 2019
+
+Primary contacts: 
+- Beom Jin Lee <beomjin@berkeley.edu>
