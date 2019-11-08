@@ -1,43 +1,44 @@
-from boardstate import *
+from omok.boardstate import *
 
 
-class Gomoku(object):
-    def __init__(self, hparams):
-        self.hparams = hparams
-        self.__chessMap = [
-            [BoardState.EMPTY for j in range(self.hparams['board_size'])]
-            for i in range(self.hparams['board_size'])
+class Gomoku:
+    def __init__(self, params):
+        self.params = params
+        self._map = [
+            [BoardState.EMPTY for j in range(self.params['board_size'])]
+            for i in range(self.params['board_size'])
             ]
-        self.__currentI = -1
-        self.__currentJ = -1
-        self.__currentState = BoardState.EMPTY
+        self.current_i = -1
+        self.current_j = -1
+        self.curr_state = BoardState.EMPTY
 
-    def get_chessMap(self):
-        return self.__chessMap
+    def get_map(self):
+        return self._map
 
     def get_chessboard_state(self, i, j):
-        return self.__chessMap[i][j]
+        return self._map[i][j]
 
     def set_chessboard_state(self, i, j, state):
-        self.__chessMap[i][j] = state
-        self.__currentI = i
-        self.__currentJ = j
-        self.__currentState = state
+        self._map[i][j] = state
+        self.current_i = i
+        self.current_j = j
+        self.curr_state = state
 
     def get_chess_result(self):
-        if self.connected_five(self.__currentI, self.__currentJ, self.__currentState):
-            return self.__currentState
+        if self.connected_five(self.current_i, self.current_j, self.curr_state):
+            return self.curr_state
         else:
             return BoardState.EMPTY
 
-    def direction_count(self, i, j, xdirection, ydirection, player):
+    def direction_count(self, i, j, x_dir, y_dir, player):
         count = 0
-        for step in range(1, 5):  # look four more steps on a certain direction
-            if xdirection != 0 and (j + xdirection * step < 0 or j + xdirection * step >= self.hparams['board_size']):
+        # look four more steps on a certain direction
+        for step in range(1, 5):
+            if x_dir != 0 and (j + x_dir * step < 0 or j + x_dir * step >= self.params['board_size']):
                 break
-            if ydirection != 0 and (i + ydirection * step < 0 or i + ydirection * step >= self.hparams['board_size']):
+            if y_dir != 0 and (i + y_dir * step < 0 or i + y_dir * step >= self.params['board_size']):
                 break
-            if self.__chessMap[i + ydirection * step][j + xdirection * step] == player:
+            if self._map[i + y_dir * step][j + x_dir * step] == player:
                 count += 1
             else:
                 break
@@ -47,8 +48,8 @@ class Gomoku(object):
         directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1), (1, -1)], [(-1, -1), (1, 1)]]
         for axis in directions:
             axis_count = 1
-            for (xdirection, ydirection) in axis:
-                axis_count += self.direction_count(i, j, xdirection, ydirection, player)
+            for x_dir, y_dir in axis:
+                axis_count += self.direction_count(i, j, x_dir, y_dir, player)
                 if axis_count >= 5:
                     return True
         return False

@@ -1,61 +1,53 @@
 from copy import deepcopy
 
-from evaluate import *
+from omok.evaluate import *
 
 
-class gomokuAI(object):
-    def __init__(self, gomoku, currentState, depth):
-        self.__gomoku = gomoku
-        self.__currentState = currentState
-        self.__depth = depth
-        self.__currentI = -1
-        self.__currentJ = -1
+class GomokuAI:
+    def __init__(self, gomoku, curr_state, depth):
+        self.gomoku = gomoku
+        self._curr_state = curr_state
+        self._depth = depth
+        self._curr_i = -1
+        self._curr_j = -1
 
     def set_board(self, i, j, state):
-        self.__gomoku.set_chessboard_state(i, j, state)
+        self.gomoku.set_chessboard_state(i, j, state)
 
-    def has_neighbor(self, state, i, j):
-        '''
-        This returns if a specific point on the board has
-        neighbors or not. Neighbors are defined as pieces
-        within 2 empty intersections.
-        '''
+    def has_neighbor(self, i, j):
+        """
+        Returns True if a specific point on the board has neighbors.
+        Def [Neighbors] pieces within 2 empty intersections.
+        :param i: x-axis
+        :param j: y-axis
+        :return: Boolean, True if (i, j) has neighbors
+        """
         # exhaustive search for four axes
         directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1), (1, -1)], [(-1, -1), (1, 1)]]
         for axis in directions:
-            for (xdirection, ydirection) in axis:
-
-                if xdirection != 0 and (j + xdirection < 0 or j + xdirection >= self.__gomoku.hparams['board_size']):
+            for x_dir, y_dir in axis:
+                if (x_dir != 0 and (j + x_dir < 0 or j + x_dir >= self.gomoku.hparams['board_size'])) \
+                        or (y_dir != 0 and (i + y_dir < 0 or i + y_dir >= self.gomoku.hparams['board_size']))\
+                        or (x_dir != 0 and (j + x_dir * 2 < 0 or j + x_dir * 2 >= self.gomoku.hparams['board_size']))\
+                        or (y_dir != 0 and (i + y_dir * 2 < 0 or i + y_dir * 2 >= self.gomoku.hparams['board_size'])):
                     break
-                if ydirection != 0 and (i + ydirection < 0 or i + ydirection >= self.__gomoku.hparams['board_size']):
-                    break
-                if self.__gomoku.get_chessMap()[i + ydirection][j + xdirection] != BoardState.EMPTY:
+                m = self.gomoku.get_map()
+                if m[i + y_dir][j + x_dir] != BoardState.EMPTY or m[i + y_dir * 2][j + x_dir * 2] != BoardState.EMPTY:
                     return True
-
-                if xdirection != 0 and (j + xdirection * 2 < 0 or j + xdirection * 2 >= self.__gomoku.hparams['board_size']):
-                    break
-
-                if ydirection != 0 and (i + ydirection * 2 < 0 or i + ydirection * 2 >= self.__gomoku.hparams['board_size']):
-                    break
-
-                if self.__gomoku.get_chessMap()[i + ydirection * 2][j + xdirection * 2] != BoardState.EMPTY:
-                    return True
-
         return False
 
-    def direction_count(self, i, j, xdirection, ydirection, state):
-        '''
-        This counts how many connected pieces are on a specific
-        direction. Returns the counted number.
-        '''
-
+    def direction_count(self, i, j, x_dir, y_dir, state):
+        """
+        Counts how many connected pieces are in a specific direction.
+        :return: Integer, number of connected pieces in the desired direction
+        """
         count = 0
         for step in range(1, 5):  # look four more steps on a certain direction
-            if xdirection != 0 and (j + xdirection * step < 0 or j + xdirection * step >= self.__gomoku.hparams['board_size']):
+            if x_dir != 0 and (j + x_dir * step < 0 or j + x_dir * step >= self.gomoku.hparams['board_size']):
                 break
-            if ydirection != 0 and (i + ydirection * step < 0 or i + ydirection * step >= self.__gomoku.hparams['board_size']):
+            if y_dir != 0 and (i + y_dir * step < 0 or i + y_dir * step >= self.gomoku.hparams['board_size']):
                 break
-            if self.__gomoku.get_chessMap()[i + ydirection * step][j + xdirection * step] == state:
+            if self.gomoku.get_map()[i + y_dir * step][j + x_dir * step] == state:
                 count += 1
             else:
                 break
@@ -68,12 +60,12 @@ class gomokuAI(object):
 
         pattern = []
         for step in range(-1, 5):  # generate a list with len 10
-            if xdirection != 0 and (j + xdirection * step < 0 or j + xdirection * step >= self.__gomoku.hparams['board_size']):
+            if xdirection != 0 and (j + xdirection * step < 0 or j + xdirection * step >= self.gomoku.hparams['board_size']):
                 break
-            if ydirection != 0 and (i + ydirection * step < 0 or i + ydirection * step >= self.__gomoku.hparams['board_size']):
+            if ydirection != 0 and (i + ydirection * step < 0 or i + ydirection * step >= self.gomoku.hparams['board_size']):
                 break
 
-            pattern.append(self.__gomoku.get_chessMap()[i + ydirection * step][j + xdirection * step])
+            pattern.append(self.gomoku.get_map()[i + ydirection * step][j + xdirection * step])
 
         return pattern
 
@@ -81,8 +73,7 @@ class gomokuAI(object):
         '''
         Checkmate means five in a row.
         '''
-        directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1),
-                                                             (1, -1)], [(-1, -1), (1, 1)]]
+        directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1), (1, -1)], [(-1, -1), (1, 1)]]
 
         for axis in directions:
             axis_count = 1
@@ -97,8 +88,7 @@ class gomokuAI(object):
         Check means a unblocked four.
         Double-three should also be a check, but it's not added yet.
         '''
-        directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1),
-                                                             (1, -1)], [(-1, -1), (1, 1)]]
+        directions = [[(-1, 0), (1, 0)], [(0, -1), (0, 1)], [(-1, 1), (1, -1)], [(-1, -1), (1, 1)]]
 
         for axis in directions:
             currentPattern = []
@@ -120,24 +110,24 @@ class gomokuAI(object):
 
         # exhaustive search
 
-        for i in range(self.__gomoku.hparams['board_size']):
-            vectors.append(self.__gomoku.get_chessMap()[i])
+        for i in range(self.gomoku.hparams['board_size']):
+            vectors.append(self.gomoku.get_map()[i])
 
-        for j in range(self.__gomoku.hparams['board_size']):
-            vectors.append([self.__gomoku.get_chessMap()[i][j] for i in range(self.__gomoku.hparams['board_size'])])
+        for j in range(self.gomoku.hparams['board_size']):
+            vectors.append([self.gomoku.get_map()[i][j] for i in range(self.gomoku.hparams['board_size'])])
 
-        vectors.append([self.__gomoku.get_chessMap()[x][x] for x in range(self.__gomoku.hparams['board_size'])])
-        for i in range(1, self.__gomoku.hparams['board_size'] - 4):
-            v = [self.__gomoku.get_chessMap()[x][x - i] for x in range(i, self.__gomoku.hparams['board_size'])]
+        vectors.append([self.gomoku.get_map()[x][x] for x in range(self.gomoku.hparams['board_size'])])
+        for i in range(1, self.gomoku.hparams['board_size'] - 4):
+            v = [self.gomoku.get_map()[x][x - i] for x in range(i, self.gomoku.hparams['board_size'])]
             vectors.append(v)
-            v = [self.__gomoku.get_chessMap()[y - i][y] for y in range(i, self.__gomoku.hparams['board_size'])]
+            v = [self.gomoku.get_map()[y - i][y] for y in range(i, self.gomoku.hparams['board_size'])]
             vectors.append(v)
 
-        vectors.append([self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - x - 1] for x in range(self.__gomoku.hparams['board_size'])])
-        for i in range(4, self.__gomoku.hparams['board_size'] - 1):
-            v = [self.__gomoku.get_chessMap()[x][i - x] for x in range(i, -1, -1)]
+        vectors.append([self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - x - 1] for x in range(self.gomoku.hparams['board_size'])])
+        for i in range(4, self.gomoku.hparams['board_size'] - 1):
+            v = [self.gomoku.get_map()[x][i - x] for x in range(i, -1, -1)]
             vectors.append(v)
-            v = [self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - x + self.__gomoku.hparams['board_size'] - i - 2] for x in range(self.__gomoku.hparams['board_size'] - i - 1, self.__gomoku.hparams['board_size'])]
+            v = [self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - x + self.gomoku.hparams['board_size'] - i - 2] for x in range(self.gomoku.hparams['board_size'] - i - 1, self.gomoku.hparams['board_size'])]
             vectors.append(v)
 
         # checkmate
@@ -158,21 +148,21 @@ class gomokuAI(object):
         Generate a list of available points for searching.
         '''
         frontierList = []
-        for i in range(self.__gomoku.hparams['board_size']):
-            for j in range(self.__gomoku.hparams['board_size']):
-                if self.__gomoku.get_chessMap()[i][j] != BoardState.EMPTY:
+        for i in range(self.gomoku.hparams['board_size']):
+            for j in range(self.gomoku.hparams['board_size']):
+                if self.gomoku.get_map()[i][j] != BoardState.EMPTY:
                     continue  # only search for available spots
-                if not self.has_neighbor(self.__gomoku.get_chessMap()[i][j], i, j):
+                if not self.has_neighbor(self.gomoku.get_map()[i][j], i, j):
                     continue
 
-                if self.__currentState == BoardState.WHITE:
+                if self._curr_state == BoardState.WHITE:
                     nextState = BoardState.BLACK
                 else:
                     nextState = BoardState.WHITE
 
                 # depth -1 every time
-                nextPlay = gomokuAI(deepcopy(self.__gomoku), nextState, self.__depth - 1)
-                nextPlay.set_board(i, j, self.__currentState)
+                nextPlay = GomokuAI(deepcopy(self.gomoku), nextState, self._depth - 1)
+                nextPlay.set_board(i, j, self._curr_state)
 
                 frontierList.append((nextPlay, i, j))
 
@@ -197,32 +187,32 @@ class gomokuAI(object):
         # exhaustive search
         vectors = []
 
-        for i in range(self.__gomoku.hparams['board_size']):
-            vectors.append(self.__gomoku.get_chessMap()[i])
+        for i in range(self.gomoku.hparams['board_size']):
+            vectors.append(self.gomoku.get_map()[i])
 
-        for j in range(self.__gomoku.hparams['board_size']):
-            vectors.append([self.__gomoku.get_chessMap()[i][j] for i in range(self.__gomoku.hparams['board_size'])])
+        for j in range(self.gomoku.hparams['board_size']):
+            vectors.append([self.gomoku.get_map()[i][j] for i in range(self.gomoku.hparams['board_size'])])
 
-        vectors.append([self.__gomoku.get_chessMap()[x][x] for x in range(self.__gomoku.hparams['board_size'])])
-        for i in range(1, self.__gomoku.hparams['board_size'] - 4):
-            v = [self.__gomoku.get_chessMap()[x][x - i] for x in range(i, self.__gomoku.hparams['board_size'])]
+        vectors.append([self.gomoku.get_map()[x][x] for x in range(self.gomoku.hparams['board_size'])])
+        for i in range(1, self.gomoku.hparams['board_size'] - 4):
+            v = [self.gomoku.get_map()[x][x - i] for x in range(i, self.gomoku.hparams['board_size'])]
             vectors.append(v)
-            v = [self.__gomoku.get_chessMap()[y - i][y] for y in range(i, self.__gomoku.hparams['board_size'])]
+            v = [self.gomoku.get_map()[y - i][y] for y in range(i, self.gomoku.hparams['board_size'])]
             vectors.append(v)
 
-        vectors.append([self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - x - 1] for x in range(self.__gomoku.hparams['board_size'])])
+        vectors.append([self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - x - 1] for x in range(self.gomoku.hparams['board_size'])])
 
-        for i in range(4, self.__gomoku.hparams['board_size'] - 1):
-            v = [self.__gomoku.get_chessMap()[x][i - x] for x in range(i, -1, -1)]
+        for i in range(4, self.gomoku.hparams['board_size'] - 1):
+            v = [self.gomoku.get_map()[x][i - x] for x in range(i, -1, -1)]
             vectors.append(v)
-            v = [self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - x + self.__gomoku.hparams['board_size'] - i - 2] for x in range(self.__gomoku.hparams['board_size'] - i - 1, self.__gomoku.hparams['board_size'])]
+            v = [self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - x + self.gomoku.hparams['board_size'] - i - 2] for x in range(self.gomoku.hparams['board_size'] - i - 1, self.gomoku.hparams['board_size'])]
             vectors.append(v)
 
         board_score = 0
 
         for v in vectors:
             score = evaluate_vector(v)
-            if self.__currentState == BoardState.WHITE:
+            if self._curr_state == BoardState.WHITE:
                 board_score += score['black'] - score['white']
             else:
                 board_score += score['white'] - score['black']
@@ -233,35 +223,35 @@ class gomokuAI(object):
         Return a point score for Degree Heuristics.
         '''
         vectors = []
-        vectors.append(self.__gomoku.get_chessMap()[i])
-        vectors.append([self.__gomoku.get_chessMap()[i][j] for i in range(self.__gomoku.hparams['board_size'])])
+        vectors.append(self.gomoku.get_map()[i])
+        vectors.append([self.gomoku.get_map()[i][j] for i in range(self.gomoku.hparams['board_size'])])
 
         if j > i:
-            v = [self.__gomoku.get_chessMap()[x][x + j - i] for x in range(0, self.__gomoku.hparams['board_size'] - j + i)]
+            v = [self.gomoku.get_map()[x][x + j - i] for x in range(0, self.gomoku.hparams['board_size'] - j + i)]
             vectors.append(v)
         elif j == i:
 
-            vectors.append([self.__gomoku.get_chessMap()[x][x] for x in range(self.__gomoku.hparams['board_size'])])
+            vectors.append([self.gomoku.get_map()[x][x] for x in range(self.gomoku.hparams['board_size'])])
         elif j < i:
 
-            v = [self.__gomoku.get_chessMap()[x + i - j][x] for x in range(0, self.__gomoku.hparams['board_size'] - i + j)]
+            v = [self.gomoku.get_map()[x + i - j][x] for x in range(0, self.gomoku.hparams['board_size'] - i + j)]
             vectors.append(v)
 
-        if i + j == self.__gomoku.hparams['board_size'] - 1:
-            vectors.append([self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - 1 - x] for x in range(self.__gomoku.hparams['board_size'])])
-        elif i + j < self.__gomoku.hparams['board_size'] - 1:
+        if i + j == self.gomoku.hparams['board_size'] - 1:
+            vectors.append([self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - 1 - x] for x in range(self.gomoku.hparams['board_size'])])
+        elif i + j < self.gomoku.hparams['board_size'] - 1:
 
-            v = [self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - 1 - x - abs(i - j)] for x in range(self.__gomoku.hparams['board_size'] - abs(i - j))]
+            v = [self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - 1 - x - abs(i - j)] for x in range(self.gomoku.hparams['board_size'] - abs(i - j))]
             vectors.append(v)
-        elif i + j > self.__gomoku.hparams['board_size'] - 1:
+        elif i + j > self.gomoku.hparams['board_size'] - 1:
 
             vectors.append(
-                [self.__gomoku.get_chessMap()[x][self.__gomoku.hparams['board_size'] - 1 - x + i + j - self.__gomoku.hparams['board_size'] + 1] for x in range(i + j - self.__gomoku.hparams['board_size'] + 1, self.__gomoku.hparams['board_size'])])
+                [self.gomoku.get_map()[x][self.gomoku.hparams['board_size'] - 1 - x + i + j - self.gomoku.hparams['board_size'] + 1] for x in range(i + j - self.gomoku.hparams['board_size'] + 1, self.gomoku.hparams['board_size'])])
 
         point_score = 0
         for v in vectors:
             score = evaluate_vector(v)
-            if self.__currentState == BoardState.WHITE:
+            if self._curr_state == BoardState.WHITE:
                 point_score += score['white']
             else:
                 point_score += score['black']
@@ -269,7 +259,7 @@ class gomokuAI(object):
 
     def alpha_beta_prune(self, ai, alpha=-10000000, beta=10000000):
 
-        if ai.__depth <= 0:
+        if ai._depth <= 0:
             score = ai.negate()
             return score
 
@@ -282,50 +272,50 @@ class gomokuAI(object):
                 return beta
             if temp_score > alpha:
                 alpha = temp_score
-                (ai.__currentI, ai.__currentJ) = (i, j)
+                (ai._currentI, ai._currentJ) = (i, j)
         return alpha
 
     def first_step(self):
         # AI plays in the center
-        self.__gomoku.set_chessboard_state(7, 7, self.__currentState)
+        self.gomoku.set_chessboard_state(7, 7, self._curr_state)
         return True
 
     def one_step(self):
-        for i in range(self.__gomoku.hparams['board_size']):
-            for j in range(self.__gomoku.hparams['board_size']):
-                if self.__gomoku.get_chessMap()[i][j] != BoardState.EMPTY:
+        for i in range(self.gomoku.hparams['board_size']):
+            for j in range(self.gomoku.hparams['board_size']):
+                if self.gomoku.get_map()[i][j] != BoardState.EMPTY:
                     continue  # only search for available spots
 
-                if self.has_checkmate(self.__currentState, i, j):
+                if self.has_checkmate(self._curr_state, i, j):
                     print('has checkmate')
-                    self.__gomoku.set_chessboard_state(i, j, self.__currentState)
+                    self.gomoku.set_chessboard_state(i, j, self._curr_state)
                     return True
 
-                if not self.has_neighbor(self.__gomoku.get_chessMap()[i][j], i, j):
+                if not self.has_neighbor(self.gomoku.get_map()[i][j], i, j):
                     continue
 
-                if self.has_check(self.__currentState, i, j):
+                if self.has_check(self._curr_state, i, j):
                     print
                     'has check, checking if opponent already has one...'
 
-                    if self.opponent_has_checkmate(self.__currentState) is True:
+                    if self.opponent_has_checkmate(self._curr_state) is True:
 
                         print('not safe, searching other moves...')
-                    elif self.opponent_has_checkmate(self.__currentState) is False:
+                    elif self.opponent_has_checkmate(self._curr_state) is False:
 
                         print('safe')
-                        self.__gomoku.set_chessboard_state(i, j, self.__currentState)
+                        self.gomoku.set_chessboard_state(i, j, self._curr_state)
                         return True
 
-        node = gomokuAI(self.__gomoku, self.__currentState, self.__depth)
+        node = GomokuAI(self.gomoku, self._curr_state, self._depth)
         score = self.alpha_beta_prune(node)
         print(score)
-        (i, j) = (node.__currentI, node.__currentJ)
+        (i, j) = (node._curr_i, node._curr_j)
 
         if not i is None and not j is None:
-            if self.__gomoku.get_chessboard_state(i, j) != BoardState.EMPTY:
+            if self.gomoku.get_chessboard_state(i, j) != BoardState.EMPTY:
                 self.one_step()
             else:
-                self.__gomoku.set_chessboard_state(i, j, self.__currentState)
+                self.gomoku.set_chessboard_state(i, j, self._curr_state)
                 return True
         return False

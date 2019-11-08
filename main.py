@@ -1,5 +1,5 @@
-import configparser
-from game import *
+from omok.game import *
+
 
 def main():
     import argparse
@@ -13,6 +13,7 @@ def main():
     # convert to dictionary
     params = vars(args)
     play(params)
+
 
 if __name__ == "__main__":
     main()

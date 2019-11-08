@@ -4,6 +4,28 @@
 ## Prerequisites
 The primary code is written in Python 3, using PyTorch and PyGame
 
+## Getting Started
+Set up a virtual environment: 
+```bash
+conda create -n omok python=3.6 anaconda
+```
+Activate the virtual environment
+```bash
+source activate omok
+```
+Then install all the required packages
+```bash
+pip install -r requirements.txt
+```
+Also, please install the current repository
+```bash
+pip install -e .
+```
+Everything should be ready to go at this point, so let's run some Python code, 
+```bash
+python main.py 
+```
+
 ## Contribute
 Please clone the Github Repository: 
 ```
